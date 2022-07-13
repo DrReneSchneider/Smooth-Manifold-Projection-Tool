@@ -3,7 +3,10 @@ close all
 
 %% User interface: ask for folder location - MULTI %%
 Directory = uigetdir(pwd, 'Select a folder');
-Files = dir(fullfile(Directory, '*w1mCHERRY*'));
+
+%Optional: Specify a label in the filename that all files have in common,
+%e.g. w2GFP
+Files = dir(fullfile(Directory, '*_w2GFP*'));
 % Display the names
 % Files.name;
 PathName = [Directory '/'];
@@ -14,7 +17,7 @@ PathName = [Directory '/'];
 prompt = {'Direction of z-stack (IN or OUT):', 'Enter envelope stiffness [pixels]:', 'Enter final filter size [pixels]:', 'Enter number of ADDITIONAL stacks to be z-smoothed [e.g. 0, 1, 2]', 'Offset: N planes above (+) or below (-) blanket [pixels]', 'Depth: MIP for N pixels into blanket [pixels]'};
 title = 'Parameter input';
 dims = [1 35];
-definput = {'OUT' '30', '30', '0', '0', '5'};
+definput = {'OUT' '30', '30', '1', '0', '3'};
 answer = inputdlg(prompt, title, dims, definput);
 folder_save = [answer{1,1} '_' answer{2,1} 'px_' answer{3,1} 'px_' answer{4,1} ' additional channel(s)_z-offset ' answer{5,1} '_MIP-depth from SMP = ' answer{6,1} '\'];
 mkdir([PathName folder_save]);
@@ -200,7 +203,7 @@ for m = 1 : length(Files)
 % %         end
         
         %% Use this block if you want this script to select the second file automatically
-        FileName2 = strrep(FileName, 'w2mCHERRY', 'w1GFP');
+        FileName2 = strrep(FileName, 'w2GFP', 'w1mCHERRY');
         
         %% Use this block if you want to manually choose the second file
         PathName2 = PathName;
@@ -231,7 +234,7 @@ for m = 1 : length(Files)
         
         %Find smooth z-map for 2nd file
         SMP_zmap_opt_2 = SMP_zmap_opt;
-%         imwrite(uint16(SMP_zmap_opt_2), [PathName2 folder_save num2str(FileName2(1:end-4)) '_SMP_zmap.TIF']);
+        imwrite(uint16(SMP_zmap_opt_2), [PathName2 folder_save num2str(FileName2(1:end-4)) '_SMP_zmap.TIF']);
         
         %Calculate MIP z-map of 2nd file and save to TIFF file
         MIP_zmap_2 = zeros(rows, columns, class(Image2_raw));
@@ -246,7 +249,7 @@ for m = 1 : length(Files)
                 MIP_zmap_2(row, col) = locs_MIP(1);
             end
         end
-%         imwrite(uint16(MIP_zmap_2), [PathName2 folder_save num2str(FileName2(1:end-4)) '_MIP_zmap.TIF']);
+        imwrite(uint16(MIP_zmap_2), [PathName2 folder_save num2str(FileName2(1:end-4)) '_MIP_zmap.TIF']);
         
         MIPbased_value = str2double(answer{6,1});
         while MIPbased_value > 0
@@ -268,7 +271,7 @@ for m = 1 : length(Files)
                 SMP_zmap_opt2(row, col) = locs_MIP2(1);
             end
         end
-%         imwrite(uint16(SMP_zmap_opt2), [PathName folder_save num2str(FileName2(1:end-4)) '_SMP-based (' answer{6,1} ') MIP_zmap.TIF']);
+        imwrite(uint16(SMP_zmap_opt2), [PathName folder_save num2str(FileName2(1:end-4)) '_SMP-based (' answer{6,1} ') MIP_zmap.TIF']);
         
         MIPbased_value = 0;
         end

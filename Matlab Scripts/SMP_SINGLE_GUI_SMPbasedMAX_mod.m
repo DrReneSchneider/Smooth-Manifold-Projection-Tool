@@ -14,15 +14,15 @@ Files(1).name = FileName;
 prompt = {'Direction of z-stack (IN or OUT):', 'Enter envelope stiffness [pixels]:', 'Enter final filter size [pixels]:', 'Enter number of ADDITIONAL stacks to be z-smoothed [e.g. 0, 1, 2]', 'Offset: N planes above (+) or below (-) blanket [pixels]', 'Depth: MIP for N pixels into blanket [pixels]'};
 title = 'Parameter input';
 dims = [1 35];
-definput = {'OUT' '10', '10', '1', '0', '3'};
+definput = {'OUT' '30', '30', '0', '0', '3'};
 answer = inputdlg(prompt, title, dims, definput);
-folder_save = [answer{1,1} '_' answer{2,1} 'px_' answer{3,1} 'px_' answer{4,1} ' additional channel(s)_z-offset ' answer{5,1} '_MIP-depth from SMP = ' answer{6,1} '\'];
+folder_save = [answer{1,1} '_' answer{2,1} 'px_' answer{3,1} 'px_' answer{4,1} ' additional channel(s)_z-offset ' answer{5,1} '_MIP-depth from SMP = ' answer{6,1} '/'];
 mkdir([PathName folder_save]);
 
 %% Process 1st file
 for m = 1 : length(Files)
     FileName = Files(m).name;
-    info = imfinfo([PathName '\' FileName]);
+    info = imfinfo([PathName '/' FileName]);
     num_images = numel(info);
     
     % Import file, i.e. all k frames of the stack %%
@@ -50,7 +50,7 @@ for m = 1 : length(Files)
         end
     end
 %     %Export accurate MIP zmap
-%     imwrite(uint16(MIP_zmap), [PathName folder_save num2str(FileName(1:end-4)) '_MIP_zmap.TIF']);
+    imwrite(uint16(MIP_zmap), [PathName folder_save num2str(FileName(1:end-4)) '_MIP_zmap.TIF']);
 
     %Smooth Manifold Projection (SMP)
     SMP_Image = zeros(rows, columns, class(Image1_raw));
@@ -108,12 +108,12 @@ for m = 1 : length(Files)
 
 %     %Save SMP to TIFF file
     Image1_SMP = Image1_raw.*zmatrix;
-%     SMP_Image = max(Image1_SMP, [], 3);
-%     if abs(offset) > 0
-%         imwrite(uint16(SMP_Image), [PathName folder_save num2str(FileName(1:end-4)) '_SMP_Offset(' num2str(offset) ').TIF']);
-%     else
-%         imwrite(uint16(SMP_Image), [PathName folder_save num2str(FileName(1:end-4)) '_SMP.TIF']);
-%     end
+    SMP_Image = max(Image1_SMP, [], 3);
+    if abs(offset) > 0
+        imwrite(uint16(SMP_Image), [PathName folder_save num2str(FileName(1:end-4)) '_SMP_Offset(' num2str(offset) ').TIF']);
+    else
+        imwrite(uint16(SMP_Image), [PathName folder_save num2str(FileName(1:end-4)) '_SMP.TIF']);
+    end
     
     %Find smooth z-map for z-stack and save to TIFF file
     SMP_zmap_opt = zeros(rows, columns, class(Image1_raw));
@@ -133,7 +133,7 @@ for m = 1 : length(Files)
             SMP_zmap_opt(row, col) = locs_MIP(1);
         end
     end
-%     imwrite(uint16(SMP_zmap_opt), [PathName folder_save num2str(FileName(1:end-4)) '_SMP_zmap.TIF']);
+    imwrite(uint16(SMP_zmap_opt), [PathName folder_save num2str(FileName(1:end-4)) '_SMP_zmap.TIF']);
     
     %Use optimized z-map to extract MIP-projection in a certain range of
     %z-levels
@@ -184,7 +184,7 @@ for m = 1 : length(Files)
             SMP_zmap_opt2(row, col) = locs_MIP2(1);
         end
     end
-%     imwrite(uint16(SMP_zmap_opt2), [PathName folder_save num2str(FileName(1:end-4)) '_SMP-based (' answer{6,1} ') MIP_zmap.TIF']);
+    imwrite(uint16(SMP_zmap_opt2), [PathName folder_save num2str(FileName(1:end-4)) '_SMP-based (' answer{6,1} ') MIP_zmap.TIF']);
     
     MIPbased_value = 0;
     end
@@ -193,21 +193,21 @@ for m = 1 : length(Files)
     %Use SMP zmap to smooth another file
     if str2num(answer{4,1}(1,1)) > 0
         %% Use this block if your files are named MTs.. and PMs...
-% %         if mean(FileName(1:2) == 'MT') == 1
-% %             FileName2 = ['PMs' FileName(4:end)];
-% %         elseif mean(FileName(1:2) == 'PM') == 1
-% %             FileName2 = ['MTs' FileName(4:end)];
-% %         end
+%         if mean(FileName(1:2) == 'MT') == 1
+%             FileName2 = ['PMs' FileName(4:end)];
+%         elseif mean(FileName(1:2) == 'PM') == 1
+%             FileName2 = ['MTs' FileName(4:end)];
+%         end
         
-        %% Use this block if you want this script to select the second file automatically
-        FileName2 = strrep(FileName, 'PMs', 'MTs');
-        PathName2 = PathName;
+%         %% Use this block if you want this script to select the second file automatically
+%         FileName2 = strrep(FileName, 'w1GFP', 'w2mCHERRY');
+%         PathName2 = PathName;
         
-%         %% Use this block if you want to manually choose the second file
+        %% Use this block if you want to manually choose the second file
 
-%         [FileName2,PathName2] = uigetfile('*.tif','Select file to which SMP should be applied ...');
-%         info2 = imfinfo([PathName2 FileName2]);
-%         num_images2 = numel(info2);
+        [FileName2,PathName2] = uigetfile('*.tif','Select file to which SMP should be applied ...');
+        info2 = imfinfo([PathName2 FileName2]);
+        num_images2 = numel(info2);
         
         %Import file, i.e. all l frames of the stack %%
         Image2_raw = [];
@@ -224,15 +224,15 @@ for m = 1 : length(Files)
         %Apply SMP and save to TIFF file
         Image2_SMP = Image2_raw.*zmatrix;
         SMP_Image_2 = max(Image2_SMP, [], 3);
-%         if abs(offset) > 0
-%             imwrite(uint16(SMP_Image_2), [PathName2 folder_save num2str(FileName2(1:end-4)) '_SMP_Offset(' num2str(offset) ').TIF']);
-%         else
-%             imwrite(uint16(SMP_Image_2), [PathName2 folder_save num2str(FileName2(1:end-4)) '_SMP.TIF']);
-%         end
+        if abs(offset) > 0
+            imwrite(uint16(SMP_Image_2), [PathName2 folder_save num2str(FileName2(1:end-4)) '_SMP_Offset(' num2str(offset) ').TIF']);
+        else
+            imwrite(uint16(SMP_Image_2), [PathName2 folder_save num2str(FileName2(1:end-4)) '_SMP.TIF']);
+        end
         
         %Find smooth z-map for 2nd file
         SMP_zmap_opt_2 = SMP_zmap_opt;
-%         imwrite(uint16(SMP_zmap_opt_2), [PathName2 folder_save num2str(FileName2(1:end-4)) '_SMP_zmap.TIF']);
+        imwrite(uint16(SMP_zmap_opt_2), [PathName2 folder_save num2str(FileName2(1:end-4)) '_SMP_zmap.TIF']);
         
         %Calculate MIP z-map of 2nd file and save to TIFF file
         MIP_zmap_2 = zeros(rows, columns, class(Image2_raw));
@@ -247,7 +247,7 @@ for m = 1 : length(Files)
                 MIP_zmap_2(row, col) = locs_MIP(1);
             end
         end
-%         imwrite(uint16(MIP_zmap_2), [PathName2 folder_save num2str(FileName2(1:end-4)) '_MIP_zmap.TIF']);
+        imwrite(uint16(MIP_zmap_2), [PathName2 folder_save num2str(FileName2(1:end-4)) '_MIP_zmap.TIF']);
         
         MIPbased_value = str2double(answer{6,1});
         while MIPbased_value > 0
@@ -269,7 +269,7 @@ for m = 1 : length(Files)
                 SMP_zmap_opt2(row, col) = locs_MIP2(1);
             end
         end
-%         imwrite(uint16(SMP_zmap_opt2), [PathName folder_save num2str(FileName2(1:end-4)) '_SMP-based (' answer{6,1} ') MIP_zmap.TIF']);
+        imwrite(uint16(SMP_zmap_opt2), [PathName folder_save num2str(FileName2(1:end-4)) '_SMP-based (' answer{6,1} ') MIP_zmap.TIF']);
         
         MIPbased_value = 0;
         end
@@ -278,7 +278,7 @@ for m = 1 : length(Files)
 %% (OPTIONAL) Use SMP to z-smooth yet another file
     if str2num(answer{4,1}(1,1)) > 1
         [FileName3,PathName3] = uigetfile('*.tif','Select another file to which SMP should be applied ...');
-        info3 = imfinfo([PathName3 '\' FileName3]);
+        info3 = imfinfo([PathName3 '/' FileName3]);
         num_images3 = numel(info3);
         
         %Import file, i.e. all l frames of the stack %%
